@@ -1,34 +1,108 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+
 <body>
 
     <script>
-        let timer
-        function debounce(fn, delay) {
 
-  return function (name) {
-    clearTimeout(timer);
 
-   timer= setTimeout(() => {
-    console.log("API Call...");
-      fn(name);
-    }, delay);
-  };
-}
 
-const result=debounce((value)=>{
-    console.log("sucesss",value);
-    
-},2000)
 
-console.log(result("vishal"));
+        async function fetchUserDashboard(userId) {
+            try {
+                let urls = ["https://jsonplaceholder.typicode.com/users", "https://jsonplaceholder.typicode.com/posts", "https://jsonplaceholder.typicode.com/todos", "https://jsonplaceholder.typicode.com/albums"]
+                const promises = urls.map(async (urls) => {
+                    const response = await fetch(urls)
+                    if (!response.ok) {
+                        throw new Error("User Not found");
+                        return
+                    }
+
+                    const result_data = await response.json()
+                    return result_data
+                })
+
+                const main_result = await Promise.all(promises)
+
+
+                const users = main_result[0].find((value) => value.id === userId)
+
+                if (!users) {
+                    throw new Error("User not Found");
+                    return
+                }
+
+                const posts = main_result[1].filter((value) => value.userId === userId)
+
+                const todos = main_result[2].filter((value) => value.userId === userId)
+                console.log(todos);
+
+
+                const albums = main_result[3].filter((value) => value.userId === userId)
+
+                const completedTodos = todos.reduce((count, todo) => {
+                    // completed असेल तर count वाढवा
+
+                    if (todo.completed === true) {
+                        count++
+                        return count
+                    }
+                    return count
+                    // नसेल तर count तसाच ठेवा
+                }, 0)
+
+                const pendingTodos = todos.reduce((count, todo) => {
+                    // completed असेल तर count वाढवा
+
+                    if (todo.completed === false) {
+                        count++
+                        return count
+                    }
+                    return count
+                    // नसेल तर count तसाच ठेवा
+                }, 0)
+
+
+                return {
+                    user: users,
+                    posts: posts,
+                    todos: todos,
+                    albums: albums,
+                    state: {
+                        totalPosts: posts.length,
+                        totalTodos: todos.length,
+                        completedTodos: completedTodos,
+                        pendingTodos: pendingTodos,
+                        totalAlbums: albums.length
+                    }
+
+                }
+
+
+
+
+
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
+        fetchUserDashboard(2).then((value) => {
+            console.log(value);
+        }).catch((error) => {
+            console.log(error);
+
+        })
 
     </script>
-    
+
 </body>
+
 </html>
